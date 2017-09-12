@@ -1,0 +1,3 @@
+scripts for post processing WRF output file
+also shell scripts for re-running wrf runs w/ different 
+sets of initial conditions on BSU's R2 cluster
