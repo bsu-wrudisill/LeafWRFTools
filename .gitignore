@@ -1,0 +1,5 @@
+*pyc
+plots/
+aux_files
+scratch
+scratch.py
