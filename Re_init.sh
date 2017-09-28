@@ -9,25 +9,36 @@
 #
 #------------------------------------
 
+#------------------------------------
+#USER INPUT
+#------------------------------------
+
+y1=$1
+m1=$2
+d1=$3
+h1=$4
+y2=$5
+m2=$6
+d2=$7
+h2=$8
+
+d02_INIT_FILE=$9
+d01_INIT_FILE="${INIT_FILE//d02/d01}"  # replaces the d02 with d02 in the filename
+INIT_NAME=${10}
+
+#The file containing the WRF output files that we want to insert into the WRF intut file
+#find /mnt/wrf_history/*/wrf_out/*/d02/ -name wrfout_d02_2003-11-20*
+#INIT_FILE=/mnt/wrf_history/vol12/wrf_out/wy_2016/d02/wrfout_d02_2016-03-14_00:00:00
+
+
 
 #------------------------------------
 # FILES AND DIRECTORIES
 #------------------------------------
 
-#will echo commands as well as other outputs 
+WRF_DIR=/home/wrudisill/scratch/WRF_SIM_CFSR_${y1}-${m1}-${d1}_${h1}__${y2}-${m2}-${d2}_${h2}/wrf_cfsr_${y1}${m1}${d1}${h1}_${y2}${m2}${d2}${h2}  
 
-#These are the dirs. of the original wrf run which we are re-running
-WRF_DIR=/home/wrudisill/scratch/WRF_SIM_CFSR_1996-12-28_00__1997-01-08_00/wrf_cfsr_1996122800_1997010800/
-PROJ_DIR=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100
-
-#The fule containing the WRF output files that we want to insert into the WRF intut file
-#find /mnt/wrf_history/*/wrf_out/*/d02/ -name wrfout_d02_2003-11-20*
-#INIT_FILE=/mnt/wrf_history/vol12/wrf_out/wy_2016/d02/wrfout_d02_2016-03-14_00:00:00
-#INIT_NAME=2016-03-14                                                                 #Name to append to Output Director
-
-INIT_FILE_d01=$1
-INIT_FILE_d02=$2
-INIT_NAME=$3
+PROJ_DIR=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_${y1}-${m1}-${d1}_${h1}__${y2}-${m2}-${d2}_${h2}                        
 
 # The directory containing matt's wrf run funcs scripts
 FUNCS=/home/wrudisill/WRF-R2/funcs/std_funcs.sh
@@ -42,21 +53,48 @@ VARLIST=SNOW,SNOWH,SNOWC
 #------------------------------------
 # FUNCTIONS
 #------------------------------------
+function filecheck()
+{
+    if [ -e $1 ]
+    then
+	echo -e "found" $1 
+    else
+	echo -e "not found" $1
+	exit 2 
+    fi
+}
+
+
+datediff() {
+    local d1=$(date -d "$1" +%s)
+    local d2=$(date -d "$2" +%s)
+    days=$(( (d2 - d1) / 86400))   # These are global
+    hours=$(($days*24))            # These are global
+}
+
+
 
 function Re_Init()
 {
-    
-    #PARAMS
-    INIT_FILE=$1    #Hi-Res wrfout file to insert
-    WRF_DIR=$2      #WRF Directory where run/ lives
-    DOMAIN=$3       #d01 or d02
-    VARLIST=$4
-    # wrfinput file to insert new conditions into
-    WRF_INPUT=$WRF_DIR/wrfinput_$DOMAIN
+    # $1 : The high res file to stick in the wrfinput file
+    # $2 : The wrfinput file to be updated
+    ncks -A -v $VARLIST -d Time,1 $1 $2 
+    local status=$?
 
-    ncks -A -v $4 -d Time,1 $INIT_FILE $WRF_INPUT
+    if [ "$status" != 0 ]; then
+	echo -e "\nNo ncks failed; check yourself\n"
+	echo -e "Exiting.\n\n"
+	exit 2
+    else
+	echo -e "----------------------"
+	echo -e " Sub'd variables: $VARLIST  \n"
+	echo -e "-----------------------"
+	echo -e " from $1 \n"
+	echo -e " into $2 \n"
+    fi
 
 }
+
 
 
 #------------------------------------------------------------
@@ -65,6 +103,7 @@ function Re_Init()
 exec >> INIT_$INIT_NAME.log 
 exec 2>&1 
 
+sleep 2
 
 echo -e "#############################################"
 echo -e ""
@@ -74,17 +113,24 @@ echo -e "     WRF Run:  ${WRF_DIR}                    "
 echo -e "                                            "
 echo -e "     Initializing Variables:  ${VARLIST}  "
 echo -e "                                            "
-echo -e "     from File:  ${1}                         "
+echo -e "     from Files:  ${d02_INIT_FILE}, ${d01_INIT_FILE}"
 echo -e " "
 echo -e "#############################################"
 
-sleep 3
+sleep 20
 
 # Source std_funcs.sh
 source $FUNCS
 
 # Create a copy of the WRF_DIR to house the new simulation; Maybe later we want to delete this; 
 
+echo -e "####### Checking that paths and files make sense ##########"
+echo -e " "
+
+filecheck $PROJ_DIR
+filecheck $WRF_DIR
+filecheck $d01_INIT_FILE
+filecheck $d02_INIT_FILE
 
 
 echo -e "####### Copy Directories and Files ##########"
@@ -94,16 +140,40 @@ echo -e "creating a copy of $WRF_DIR..."
 WRF_DIR_COPY=$WRF_DIR\_INIT_$INIT_NAME
 
 #copy files, exclude previous wrfout files from copying
+
 rsync -av --exclude 'wrfout*' --exclude 'wrfxtrm*' --exclude 'wrfrst*' $WRF_DIR/ $WRF_DIR_COPY 
 echo -e "created $WRF_DIR_COPY"
 
 # Create RUN_DIR variable path for the run directory within the new WRF_DIR copy
 RUN_DIR=$WRF_DIR_COPY/run
 
-echo -e "copying namelist.input to $RUN_DIR"
 
+# COPY AND SET UP NAMELIST FILE
+echo -e "copying namelist.input to $RUN_DIR"
 # Copy namelist.input_YYYY-MM-DD_HH to the RUN_DIR (The namelist.input gets removed from the directory for whatever readson)
-cp -v $PROJ_DIR/wrf_log/namelist.input_* $RUN_DIR/namelist.input
+
+namelist_file=$(ls -d $PROJ_DIR/wrf_log/namelist.input_*| head -n 1)
+echo -e $namelist_file 
+
+cp -v $namelist_file $RUN_DIR/namelist.input
+
+
+# create args to sed into namelist file
+n_args="RUN_DAYS::$run_days RUN_HOURS::$run_hours START_YEAR::$y1"
+n_args="$n_args START_MONTH::$m1 START_DAY::$d1"
+n_args="$n_args START_HOUR::$h1 END_YEAR::$y2 "  
+n_args="$n_args END_MONTH::$m2 END_DAY::$d2 END_HOUR::$h2"
+  
+
+echo -e "sed-ing times into namelist file"
+
+sed_file $RUN_DIR/namelist.input $n_args
+
+echo -e "done sed-ing times into namelist.input"
+echo -e ""
+echo -e "--------------------------------------"
+echo -e ""
+
 
 echo -e "Creating OUTPUT Directories"
 # Create New Directory and Sub-Directories for Re_Init Run
@@ -117,13 +187,14 @@ mkdir $OUT_DIR/wrf_log
 # maybe more....
 
 # Copy submit script from OG directory to the New Directory
-cp $PROJ_DIR/wrf_log/submit_wrf_* $OUT_DIR
+submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_wrf*| head -n 1)
+
+filecheck $submit_script
+cp $submit_script $OUT_DIR
 
 # Modify the path of the submit script to the correct directory ($RUN_DIR)
 # sed in line-by-line. Note the DOUBLE QUOTES... otherwise variables are not evaluated.
 # ALSO, note the @. sed can take many delimiters. / causes an error 
-
-
 
 
 echo -e "######### WRF RUN SETUP  #############"
@@ -134,18 +205,18 @@ sed -i "27s@.*@TIMING_FILE=${WRF_DIR_COPY}@" $OUT_DIR/submit_wrf*
 sed -i "28s@.*@RUN_DIR=${RUN_DIR}@" $OUT_DIR/submit_wrf*
 
 
+
 echo -e "Insert $VARLIST into WRFINPUT file"
 
 # Insert New Variables into wrfinput files;
-Re_Init $INIT_FILE_d01 $RUN_DIR d01 $VARLIST
-Re_Init $INIT_FILE_d02 $RUN_DIR d02 $VARLIST
+Re_Init $d02_INIT_FILE $RUN_DIR/wrfinput_d02 
+Re_Init $d01_INIT_FILE $RUN_DIR/wrfinput_d01    # Comment this out if ya don't want it
 
 
 echo -e "copy $RUN_DIR/wrfinput_$DOMAIN  file to $OUTDIR/wrfinput"
 
 # Copy WRF_INPUT Files to Output Directory ; maybe this is superfluous 
 cp $RUN_DIR/wrfinput_$DOMAIN $OUT_DIR/wrfinput/.
-
 
 
 echo -e "######### WRF RUN SETUP  #############"
