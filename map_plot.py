@@ -34,9 +34,14 @@ class diff_plots:
     return read(file1, var, self.timestep) - read(file2, var, self.timestep) 
 
 
-  def add_diff(self, fileA, fileB, fig, new_ax, title, var, vmin, vmax):
+  def add_diff(self, fileA, fileB, fig, new_ax, title, var, **kwargs):
+
     diff = self.ncdiff(fileA, fileB, var)
     m_diff = ma.masked_equal(diff, 0)
+
+    vmin = kwargs.get('vmin', m_diff.min())
+    vmax = kwargs.get('vmax', m_diff.max())
+
     self.bmap_args['ax'] = new_ax
     basemap = Basemap(**self.bmap_args)
     clr  = basemap.pcolor(self.x, self.y, m_diff, vmin=vmin, vmax=vmax, cmap='bwr')
@@ -160,11 +165,11 @@ init = "/wrfinput/wrfinput_d02"
 
 
 flist = [
-"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27",
-"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31",
-"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2005-12-30",
-"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2016-03-14",
-"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20"]
+"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27",
+"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31",
+"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2005-12-30",
+"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2016-03-14",
+"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20"]
 
 
 
@@ -191,10 +196,11 @@ e.make_plot(fig, axes[4,1], variable)
 
 
 # variable Diff; Center column
-a.add_diff(flist[1]+out,flist[0]+out, fig, axes[1,2], ' ', variable, vmin=-5, vmax=5)
-a.add_diff(flist[2]+out,flist[0]+out, fig, axes[2,2], ' ', variable, vmin=-5, vmax=5)
-a.add_diff(flist[3]+out,flist[0]+out, fig, axes[3,2], ' ', variable, vmin=-5, vmax=5)
-a.add_diff(flist[4]+out,flist[0]+out, fig, axes[4,2], ' ', variable, vmin=-5, vmax=5)
+#a.add_diff(flist[0]+out,flist[0]+out, fig, axes[0,2], ' ', variable)#, vmin=-5, vmax=5)
+a.add_diff(flist[1]+out,flist[0]+out, fig, axes[1,2], ' ', variable, vmin=-7, vmax=7)
+a.add_diff(flist[2]+out,flist[0]+out, fig, axes[2,2], ' ', variable, vmin=-7, vmax=7)
+a.add_diff(flist[3]+out,flist[0]+out, fig, axes[3,2], ' ', variable, vmin=-7, vmax=7)
+a.add_diff(flist[4]+out,flist[0]+out, fig, axes[4,2], ' ', variable, vmin=-7, vmax=7)
 
 #add_diff(fileA, filesB) shows fileA - fileB
 
@@ -206,7 +212,7 @@ diff_plots(flist[3]+init, "SNOWC").make_plot(fig, axes[3,0], "SNOWC", vmin=0, vm
 diff_plots(flist[4]+init, "SNOWC").make_plot(fig, axes[4,0], "SNOWC", vmin=0, vmax=1)
 
 
-fig.suptitle('WRF 2m Air Temp (K) Dec-31-1996:00:00', fontsize=14, fontweight='bold')
+fig.suptitle('T2', fontsize=14, fontweight='bold')
 axes[0,2].axis('off')
 
 

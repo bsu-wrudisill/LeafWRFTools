@@ -17,7 +17,7 @@
 #will echo commands as well as other outputs 
 
 #These are the dirs. of the original wrf run which we are re-running
-WRF_DIR=/scratch/wrudisill/WRF_SIM_CFSR_1996-12-30_00__1997-01-01_00/wrf_cfsr_1996123000_1997010100
+WRF_DIR=/home/wrudisill/scratch/WRF_SIM_CFSR_1996-12-28_00__1997-01-08_00/wrf_cfsr_1996122800_1997010800/
 PROJ_DIR=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100
 
 #The fule containing the WRF output files that we want to insert into the WRF intut file
@@ -25,18 +25,18 @@ PROJ_DIR=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100
 #INIT_FILE=/mnt/wrf_history/vol12/wrf_out/wy_2016/d02/wrfout_d02_2016-03-14_00:00:00
 #INIT_NAME=2016-03-14                                                                 #Name to append to Output Director
 
-INIT_FILE=$1
-INIT_NAME=$2
+INIT_FILE_d01=$1
+INIT_FILE_d02=$2
+INIT_NAME=$3
 
 # The directory containing matt's wrf run funcs scripts
 FUNCS=/home/wrudisill/WRF-R2/funcs/std_funcs.sh
-
 
 #------------------------------------
 # More Options
 #------------------------------------
 
-DOMAIN=d02
+#DOMAIN=d02
 VARLIST=SNOW,SNOWH,SNOWC
 
 #------------------------------------
@@ -137,7 +137,9 @@ sed -i "28s@.*@RUN_DIR=${RUN_DIR}@" $OUT_DIR/submit_wrf*
 echo -e "Insert $VARLIST into WRFINPUT file"
 
 # Insert New Variables into wrfinput files;
-Re_Init $INIT_FILE $RUN_DIR $DOMAIN $VARLIST
+Re_Init $INIT_FILE_d01 $RUN_DIR d01 $VARLIST
+Re_Init $INIT_FILE_d02 $RUN_DIR d02 $VARLIST
+
 
 echo -e "copy $RUN_DIR/wrfinput_$DOMAIN  file to $OUTDIR/wrfinput"
 

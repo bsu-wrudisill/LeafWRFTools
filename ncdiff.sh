@@ -2,11 +2,11 @@
 
 
 
-#base=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100/wrf_out
+base=/home/wrudisill/scratch/WRF_PROJECTS/INIT/
 #hires=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_HiRes/wrf_out
 
-base=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31/wrf_out
-base1=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20/wrf_out
+#base=/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31/wrf_out
+#base1=/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20/wrf_out
 
 #base has MORE snow than base1
 
@@ -35,8 +35,7 @@ base1=/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2
 #done 
 
 
-ncdiff $base/wrfout_d02_1996-12-31_00:00:00 $base1/wrfout_d02_1996-12-31_00:00:00 test_diff.nc
-
+ncdiff $base/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27/wrf_out/wrfout_d02_1996-12-31_00:00:00 $base/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20/wrf_out/wrfout_d02_1996-12-31_00:00:00 -o foo.nc
 
 
 

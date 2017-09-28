@@ -17,18 +17,20 @@ between a lat/lon point
 '''
 
 
-filenameA="/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20/wrf_out/wrfout_d02_1996-12-31_00:00:00"
+filenameA="/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20/wrf_out/wrfout_d02_1996-12-31_00:00:00"
 
-filenameB="/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2015-12-30/wrf_out/wrfout_d02_1996-12-31_00:00:00"
+filenameB="/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27/wrf_out/wrfout_d02_1996-12-31_00:00:00"
 
-start = (44.0, -116.7)
-end   = (44.0, -113.85)
+start = (45.0, -115.85)
+end   = (42.8, -115.78)
+
+
 
 
 #var = "uvmet_wspd_wdir"
-var = 'wa'
-plot_title= 'wa (m/s)'
-plot_name= 'w_vertcross'
+var = 'temp'
+plot_title= 'temp (K)'
+plot_name= 'temp_vertcross_1996-01-27'
 
 def vert_cross_section(filename, var,time):
 
@@ -39,11 +41,11 @@ def vert_cross_section(filename, var,time):
     
 
     #wspd =  getvar(ncfile, "uvmet_wspd_wdir", units="kt")[0,:]
-    field =  getvar(ncfile, var, units='m s-1')
+    field =  getvar(ncfile, var)
     # Create the start point and end point for the cross section
 
     start_point = CoordPair(lat= start[0], lon= start[1]) # Cascade
-    end_point = CoordPair(lat=start[0],  lon= end[1])
+    end_point   = CoordPair(lat= end[0],  lon= end[1])
 
     # Compute the vertical cross-section interpolation.  Also, include the lat/lon
     # points along the cross-section.
@@ -52,22 +54,16 @@ def vert_cross_section(filename, var,time):
     return field_cross
 
 
-A = vert_cross_section(filenameA, var, 10) 
-#a = to_np(A)
-#for i in range(1,24):
-#    print i
-#    a = a + to_np(vert_cross_section(filenameA, var, i))
+A = vert_cross_section(filenameB, var, 20) 
+a = to_np(A)
 
-B = vert_cross_section(filenameB, var, 10) 
+#B = vert_cross_section(filenameB, var, 20) 
 #b = to_np(B)
-#for i in range(1,24):
-#    print i
-#    b = b + to_np(vert_cross_section(filenameA, var, i))
 
 
 
 
-diff_array = to_np(B) - to_np(A)
+#diff_array = to_np(B) - to_np(A)
 #diff_array = a - b
 
 # Create the figure
@@ -75,11 +71,12 @@ diff_array = to_np(B) - to_np(A)
 fig,ax1 = plt.subplots(1,1)
 
 # Make the contour plot
-levels = np.linspace(diff_array.min(), diff_array.max(), 50)
+#levels = np.linspace(diff_array.min(), diff_array.max(), 50)
+levels = np.linspace(a.min(), a.max(), 50)
 #print diff_array.min()
 
 #wspd_contours = ax.contourf(to_np(wspd_cross), cmap=get_cmap("jet"), levels=levels)
-contours = ax1.contourf(diff_array, cmap=get_cmap("jet"), levels=levels)
+contours = ax1.contourf(a, cmap=get_cmap("jet"), levels=levels)
 
 # Add the color bar
 plt.colorbar(contours, ax=ax1)
