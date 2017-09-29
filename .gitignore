@@ -4,3 +4,8 @@ aux_files
 scratch
 scratch.py
 *.png
+*foo*
+run/
+*log*
+
+
