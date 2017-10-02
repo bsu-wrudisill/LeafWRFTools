@@ -283,7 +283,7 @@ else
 fi
 
 wrf_loop_sec=60
-wait_for_jobs $wrf_loop_sec $job_id_wrf
+wait_for_jobs $wrf_loop_sec $job_id_real
 
 
 
