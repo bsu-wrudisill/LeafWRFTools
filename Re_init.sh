@@ -100,7 +100,7 @@ function datediff() {
 function Re_Init()
 
 # Insert specified wrf vars from 1 file to another
-
+o
 {
     # $1 : The high res file to stick in the wrfinput file
     # $2 : The wrfinput file to be updated
@@ -125,25 +125,26 @@ function Re_Init()
 
 
 #------------------------------------------------------------
-# MAIN
+        #----------------  MAIN -----------------# 
 #------------------------------------------------------------
 exec >> wrf_${y1}${m1}${d1}${h1}_${y2}${m2}${d2}${h2}_INIT_$INIT_NAME.log 
 exec 2>&1 
 
 sleep 2
 
-echo -e ""
-echo -e "#############################################"
-echo -e ""
-echo -e " Starting Re-Initialization Run for:        "
-echo -e "                                            "
-echo -e "     WRF Run:  ${WRF_DIR}                    "
-echo -e "                                            "
-echo -e "     Initializing Variables:  ${VARLIST}  "
-echo -e "                                            "
-echo -e "     from Files:  ${d02_INIT_FILE}, ${d01_INIT_FILE}"
-echo -e " "
-echo -e "#############################################"
+echo -e "                                                       "
+echo -e "                                                       "
+echo -e "#######################################################"
+echo -e "                                                       "
+echo -e " Starting Re-Initialization Run for:                   "
+echo -e "                                                       "
+echo -e "     WRF Run:  ${WRF_DIR}                              "
+echo -e "                                                       "
+echo -e "     Initializing Variables:  ${VARLIST}               "
+echo -e "                                                       "
+echo -e "     from Files:  ${d02_INIT_FILE}, ${d01_INIT_FILE}   "
+echo -e "                                                       "
+echo -e "#######################################################"
 
 sleep 20
 
@@ -171,7 +172,7 @@ TRASHLIST="$TRASHLIST $WRF_DIR_COPY"
 
 echo -e "rsyncing..... /n"
 #copy files, exclude previous wrfout files from copying
-rsync -a --exclude 'wrfout*' --exclude 'wrfxtrm*' --exclude 'wrfrst*' $WRF_DIR/ $WRF_DIR_COPY  # removed verbose (-v) flag
+rsync -a --exclude 'wrfinput*' --exclude 'wrfbdy*' --exclude 'wrfout*' --exclude 'wrfxtrm*' --exclude 'wrfrst*' $WRF_DIR/ $WRF_DIR_COPY  # removed verbose (-v) flag
 echo -e "created $WRF_DIR_COPY /n"
 
 # Create RUN_DIR variable path for the run directory within the new WRF_DIR copy
@@ -225,23 +226,70 @@ TRASHLIST="$TRASHLIST $OUT_DIR"
 
 echo -e "copying submit scripts"
 # Copy submit script from OG directory to the New Directory
-submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_wrf*| head -n 1)
+wrf_submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_wrf*| head -n 1)
+real_submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_wrf*| head -n 1)
 
-filecheck $submit_script
-cp $submit_script $OUT_DIR
+filecheck $wrf_submit_script
+filecheck $real_submit_script
+cp $wrf_submit_script $OUT_DIR/
+
+
+# ------------ sed submit script files for real and wrf --------------------# 
 
 # Modify the path of the submit script to the correct directory ($RUN_DIR)
 # sed in line-by-line. Note the DOUBLE QUOTES... otherwise variables are not evaluated.
 # ALSO, note the @. sed can take many delimiters. / causes an error 
 
 
-echo -e "######### WRF RUN SETUP  #############"
+echo -e "######### WRF/REAL RUN SETUP  #############"
 echo -e ""
-echo -e "Sed-ing filepaths into WRF Submit script"
+echo -e "Sed-ing filepaths into WRF Submit script ... "
 
 sed -i "27s@.*@TIMING_FILE=${WRF_DIR_COPY}@" $OUT_DIR/submit_wrf*
 sed -i "28s@.*@RUN_DIR=${RUN_DIR}@" $OUT_DIR/submit_wrf*
 
+echo -e "Sed-ing filepaths into Real Submit script ..."
+
+sed -i "27s@.*@TIMING_FILE=${WRF_DIR_COPY}@" $OUT_DIR/submit_real*
+sed -i "28s@.*@RUN_DIR=${RUN_DIR}@" $OUT_DIR/submit_real*
+
+echo -e "Done sed-ing submit scripts"
+
+# Change to the projects directory (it's ok to submit the job from here)
+cd $OUT_DIR  # Change to the output directory 
+
+
+
+# ------------ REAL.exe run --------------------# 
+
+echo -e "######### Submit real.exe  #############"
+echo -e ""
+
+sbatch submit_real_* > ./catch_REALJOB_id
+
+s_str='Submitted batch job'   # s_str = search string
+job_id_real=$(grep "$s_str" ./catch_${job_name}_id | cut -d' ' -f4)
+if [ "$job_id_real" = "" ]; then
+    echo -e "\nNo $job_name.exe job ID found.\n"
+    echo -e "Exiting.\n\n"
+    exit 2
+else
+    echo -e "\nFound $job_name.exe job ID: $job_id_real\n"  
+    echo -e "Removing temp job submission output file: catch_${job_name}_id.."
+    rm -vf ./catch_${job_name}_id
+    sleep 2
+fi
+
+wrf_loop_sec=60
+wait_for_jobs $wrf_loop_sec $job_id_wrf
+
+
+
+# ------------ Change WRFinput fields  --------------------# 
+
+# Check that files exist 
+filecheck $RUN_DIR/wrfinput_d01
+filecheck $RUN_DIR/wrfinput_d02
 echo -e "Insert $VARLIST into WRFINPUT file"
 
 # Insert New Variables into wrfinput files;
@@ -249,20 +297,18 @@ Re_Init $d02_INIT_FILE $RUN_DIR/wrfinput_d02
 Re_Init $d01_INIT_FILE $RUN_DIR/wrfinput_d01    # Comment this out if ya don't want it
 
 
-#echo -e "copy $RUN_DIR/wrfinput_$DOMAIN  file to $OUTDIR/wrfinput"
-
-# Copy WRF_INPUT Files to Output Directory ; maybe this is superfluous 
-# cp $RUN_DIR/wrfinput_$DOMAIN $OUT_DIR/wrfinput/.
 
 
-echo -e "######### Submit WRF Run  #############"
-echo -e ""
+
 #------WRF SUBMISSION---------# 
 # Check submit script 
 
-echo "Submitting WRF Job"
-cd $OUT_DIR  # Change to the output directory 
+echo -e "######### Submit WRF Run  #############"
+echo -e ""
 
+
+
+echo "Submitting WRF Job"
 sbatch submit_wrf_* > ./catch_WRFJOB_id
 
 # wrf.exe: recover job ID from job submission output file, and check it
