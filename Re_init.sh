@@ -198,7 +198,7 @@ n_args="$n_args START_MONTH::$m1 START_DAY::$d1"
 n_args="$n_args START_HOUR::$h1 END_YEAR::$y2 "  
 n_args="$n_args END_MONTH::$m2 END_DAY::$d2 END_HOUR::$h2"
 n_args="$n_args FRAMES_PER_OUTFILE::24"
-n_args="$n_args RESTART_RUN::.false."  
+n_args="$n_args RESTART_RUN::false"  
 n_args="$n_args RESTART_INTERVAL_MINS::2880"
 n_args="$n_args FRAMES_PER_AUXHIST3::24"
 
