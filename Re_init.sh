@@ -100,7 +100,7 @@ function datediff() {
 function Re_Init()
 
 # Insert specified wrf vars from 1 file to another
-o
+
 {
     # $1 : The high res file to stick in the wrfinput file
     # $2 : The wrfinput file to be updated
@@ -227,11 +227,14 @@ TRASHLIST="$TRASHLIST $OUT_DIR"
 echo -e "copying submit scripts"
 # Copy submit script from OG directory to the New Directory
 wrf_submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_wrf*| head -n 1)
-real_submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_wrf*| head -n 1)
+real_submit_script=$(ls -d $PROJ_DIR/wrf_log/submit_real*| head -n 1)
 
 filecheck $wrf_submit_script
 filecheck $real_submit_script
 cp $wrf_submit_script $OUT_DIR/
+cp $real_submit_script $OUT_DIR/
+
+
 
 
 # ------------ sed submit script files for real and wrf --------------------# 
@@ -259,7 +262,6 @@ echo -e "Done sed-ing submit scripts"
 cd $OUT_DIR  # Change to the output directory 
 
 
-
 # ------------ REAL.exe run --------------------# 
 
 echo -e "######### Submit real.exe  #############"
@@ -268,7 +270,7 @@ echo -e ""
 sbatch submit_real_* > ./catch_REALJOB_id
 
 s_str='Submitted batch job'   # s_str = search string
-job_id_real=$(grep "$s_str" ./catch_${job_name}_id | cut -d' ' -f4)
+job_id_real=$(grep "$s_str" ./catch_REALJOB_id | cut -d' ' -f4)
 if [ "$job_id_real" = "" ]; then
     echo -e "\nNo $job_name.exe job ID found.\n"
     echo -e "Exiting.\n\n"
