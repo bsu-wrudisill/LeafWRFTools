@@ -153,8 +153,8 @@ class diff_plots:
 # MAIN PLOTTING
 #----------------------------------------#
 
-out  = "/wrf_out/wrfout_d02_1996-12-31_00:00:00"
-init = "/wrfinput/wrfinput_d02"
+
+
 
 #flist = [
 #"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31",0
@@ -162,61 +162,57 @@ init = "/wrfinput/wrfinput_d02"
 #"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2016-03-14",2
 #"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_2005-12-30",3
 #"/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27"]4
+# flist = [
+# "/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27",
+# "/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31"]
 
 
-flist = [
-"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-01-27",
-"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_1996-12-31",
-"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2005-12-30",
-"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2016-03-14",
-"/home/wrudisill/scratch/WRF_PROJECTS/INIT/wrf_cfsr_1996123000_1997010100_INIT_2003-11-20"]
+# ----- WRFOUT Subset to Plot ------# 
+base='/Volumes/PASSPORT/wrfout/THESIS_WRF_PROJECTS/1997_AR/'
+flist = [base+'subset_wrf_cfsr_1996-12-28_00__1997-01-08_00_INIT_1990-09-10_D01D02',
+         base+'subset_wrf_cfsr_1996-12-28_00__1997-01-08_00_INIT_1996-01-27_D01D02']
+
+out  = "/precip_wrfout_d02_1997-01-07_00:00:00"
+
+# ----- WRFinput files to show alongside ------# 
+init1 = "/Volumes/PASSPORT/wrfout/wrfin/" + 'init_snow_1990_d02.nc'
+inti2 = "/Volumes/PASSPORT/wrfout/wrfin/" + 'init_snow_1996_d02.nc'
 
 
+variable = "RAINNC_TOTAL"
 
-
-
-variable = "T2"
 
 fig, axes = plt.subplots(5,3)
 
-aa = diff_plots(flist[0]+init, "SNOWC")
+
+aa = diff_plots(init1, "SNOWC")
 a = diff_plots(flist[0]+out, variable)
 b = diff_plots(flist[1]+out, variable)
-c = diff_plots(flist[2]+out, variable)
-d = diff_plots(flist[3]+out, variable)
-e = diff_plots(flist[4]+out, variable)
 
 
 #variable, Left Colu
 a.make_plot(fig, axes[0,1], variable)
 b.make_plot(fig, axes[1,1], variable)
-c.make_plot(fig, axes[2,1], variable)
-d.make_plot(fig, axes[3,1], variable)
-e.make_plot(fig, axes[4,1], variable)
-
 
 # variable Diff; Center column
 #a.add_diff(flist[0]+out,flist[0]+out, fig, axes[0,2], ' ', variable)#, vmin=-5, vmax=5)
 a.add_diff(flist[1]+out,flist[0]+out, fig, axes[1,2], ' ', variable, vmin=-7, vmax=7)
-a.add_diff(flist[2]+out,flist[0]+out, fig, axes[2,2], ' ', variable, vmin=-7, vmax=7)
-a.add_diff(flist[3]+out,flist[0]+out, fig, axes[3,2], ' ', variable, vmin=-7, vmax=7)
-a.add_diff(flist[4]+out,flist[0]+out, fig, axes[4,2], ' ', variable, vmin=-7, vmax=7)
+#a.add_diff(flist[2]+out,flist[0]+out, fig, axes[2,2], ' ', variable, vmin=-7, vmax=7)
+
 
 #add_diff(fileA, filesB) shows fileA - fileB
-
 # SNOWH Diff; Right Columns
 aa.make_plot(fig, axes[0,0], 'SNOWC', vmin=0, vmax=1)
-diff_plots(flist[1]+init, "SNOWC").make_plot(fig, axes[1,0], "SNOWC", vmin=0, vmax=1)
-diff_plots(flist[2]+init, "SNOWC").make_plot(fig, axes[2,0], "SNOWC", vmin=0, vmax=1)
-diff_plots(flist[3]+init, "SNOWC").make_plot(fig, axes[3,0], "SNOWC", vmin=0, vmax=1)
-diff_plots(flist[4]+init, "SNOWC").make_plot(fig, axes[4,0], "SNOWC", vmin=0, vmax=1)
 
+diff_plots(init1, "SNOWC").make_plot(fig, axes[1,0], "SNOWC", vmin=0, vmax=1)
+diff_plots(init2, "SNOWC").make_plot(fig, axes[2,0], "SNOWC", vmin=0, vmax=1)
 
 fig.suptitle('T2', fontsize=14, fontweight='bold')
 axes[0,2].axis('off')
+axes[2,2].axis('off')
 
 
-plt.savefig('T2_diffplot.png', dpi=700)
+plt.savefig('RAINNC_TOTAL.png', dpi=200)
 fig.clf()
 plt.clf()
 del fig

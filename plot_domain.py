@@ -123,13 +123,12 @@ if __name__== '__main__':
     start = (45.500, -113.943)
     end   = (42.800, -113.943)
 
-
-
     plot_cross_section(start, end, ax)
 
     #---Set plot title
     # ax.set_title(varname)
-    plt.savefig('outfig', bbox_inches='tight')
+    plt.show()
+#    plt.savefig('outfig', bbox_inches='tight')
     del fig 
     del ax
     plt.clf()
