@@ -1,4 +1,4 @@
-from multinc import *
+from MultiNC import *
 
 sample_wrf_file = "/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1998-02-01_00__1998-03-03_00/wrf_out/wrfout_d02_1998-03-01_00:00:00"
 

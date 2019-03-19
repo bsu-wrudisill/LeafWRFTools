@@ -1,6 +1,8 @@
-from multinc import *
+from MultiNC import *
 import sys
 import glob 
+
+
 #dirc="/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1998-03-19_00__1998-03-27_00/wrf_out/{}"
 #files="wrfout_d02_1998*"
 #filelist = dirc.format(files)

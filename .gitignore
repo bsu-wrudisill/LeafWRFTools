@@ -1,3 +1,4 @@
 Data
 Figures
 *.pyc
+*__pycache__

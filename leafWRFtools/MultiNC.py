@@ -4,11 +4,16 @@ import datetime
 from netCDF4 import Dataset
 import xarray as xr
 import glob
-from matplotlib import pyplot as plt 
+#from matplotlib import pyplot as plt 
 from netCDF4 import Dataset     
 from multiprocessing import Pool
 import subprocess
+import SystemFX as sfx
 
+"""
+Classes 
+
+"""
 class WRFVIZ:
     # functions to create visualizations of WRF out data 
 
@@ -18,7 +23,7 @@ class WRFVIZ:
     def callNCL():
         # 
         pass       
-#
+
 class Regridding:
     # functions to regrid WRF variables vs. well known datasets 
     #  
@@ -29,56 +34,6 @@ class SnotelCompare:
     def __init__():
         pass
 
-def NCL(**kwargs):
-    # plot wrf o    
-    dic = {"FNAME":None,
-           "VARNAME":"NoQuotes",
-           "WRF_EXAMPLE_FILE":None,
-           "PLOTTITLE":None,
-           "UNITS":None}
-    
-    for key in kwargs.keys():
-        if key in dic.keys():
-            if dic[key] == "NoQuotes":
-                # do not add quotes 
-                insert = kwargs[key]
-            else:
-                # add quotes 
-                insert = "\"{}\"".format(kwargs[key])
-            dic.update({key: insert})
-    
-    script="./templates/ncl_wrfmap_template.ncl"
-    GenericWrite(script, dic, "./ncl_wrfmap.ncl")
-    print dic 
-    # execute the plot command 
-    cmd = "ncl ./ncl_wrfmap.ncl"
-    out, err = system_cmd(cmd)
-    print out 
-
-
-def system_cmd(cmd):
-    # issue system commands 
-    proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
-    out,err = proc.communicate()
-    return out.split(),err
-
-def GenericWrite(readpath,replacedata,writepath):
-    # path to file to read 
-    # data dictionary to put into file
-    # path to the write out file 
-
-    with open(readpath, 'r') as file:
-        filedata = file.read()
-        #  
-        # loop thru dictionary and replace items
-    for item in replacedata:
-        filedata = filedata.replace(item, str(replacedata[item])) # make sure it's a string 
-
-    # Write the file out again
-    with open(writepath, 'w') as file:
-        file.write(filedata)
-    # done 
-               
 
 class WRFOUT():
     # wrapper for a variety of functions
@@ -97,7 +52,48 @@ class WRFOUT():
             ds = xr.open_mfdataset(filelist)
             # create a new dataset 
             newds = xr.Dataset(data_vars=None, coords=ds.coords, attrs=ds.attrs) 
+
+"""
+Decorators 
+"""
+
+
+
+
+"""
+Functions 
+"""
+
+def NCL(**kwargs):
+    # Create Nice looking WRFout plots using the NCL plotting library 
+    # literally creates an NCL script with the right parameters 
+    # and executes by making a system command 
+
+    dic = {"FNAME":None,
+           "VARNAME":"NoQuotes",
+           "WRF_EXAMPLE_FILE":None,
+           "PLOTTITLE":None,
+           "UNITS":None}
+    
+    for key in kwargs.keys():
+        if key in dic.keys():
+            if dic[key] == "NoQuotes":
+                # do not add quotes 
+                insert = kwargs[key]
+            else:
+                # add quotes 
+                insert = "\"{}\"".format(kwargs[key])
+            dic.update({key: insert})
+    
+    script="./templates/ncl_wrfmap_template.ncl"
+    sfc.GenericWrite(script, dic, "./ncl_wrfmap.ncl")
+    print(dic)
+    # execute the plot command 
+    cmd = "ncl ./ncl_wrfmap.ncl"
+    out, err = sfx.system_cmd(cmd)
+    print(out)
    
+
 def MultiNC(datapath, variable, *args, **kwargs):
     # get kwargs 
     region    = kwargs.get('region', None)
@@ -108,11 +104,6 @@ def MultiNC(datapath, variable, *args, **kwargs):
 def PrecipAnalyze():
     pass 
 
-def general_dask_apply(x, y, dim):
-    return xr.apply_ufunc(
-        covariance_gufunc, x, y,
-        input_core_dims=[[dim], [dim]],
-        dask='parallelized',output_dtypes=[float])
 
 def __takeSecond(elem):
     # used to sort a list of tuples by the second tuple member
@@ -127,7 +118,7 @@ def ApplyWrfPyParallel(fx, datalist):
         datalist = glob.glob(datalist) 
     from multiprocessing import Pool, cpu_count
     ncpu = cpu_count()
-    print "Starting ApplyWrfPyParallel. Using {} cores".format(ncpu)
+    print("Starting ApplyWrfPyParallel. Using {} cores".format(ncpu))
     
     p = Pool(ncpu)
     keys = range(len(datalist))
@@ -152,7 +143,7 @@ def VerticalEnergyStorage(outds, inds, datalist):
     # assign values to dedt 
     outds["Estore"][:,:,:] = np.load("tmp_raw.npy")
     outds["dEdt"][1:,:,:] = calculate_rate(outds, "Estore")
-    # done 
+    # don 
 
 
 def __vestore(datalist, **kwargs):
@@ -201,7 +192,7 @@ def RainRate(inds,ods,**kwargs):
     # calculate snow rate 
     ods["SNOWRATE"]  = (['time','xlat','xlon'],  np.zeros_like(inds['RAINNC']))
     ods["SNOWRATE"][1:,:,:] = inds["SNOWNC"][1:,:,:] - inds["SNOWNC"][0:-1, :,:]
-    print "Wrote PRATE, SNOWRATE"
+    print("Wrote PRATE, SNOWRATE")
     return      
 
 def bucket_varname(string):
@@ -216,7 +207,7 @@ def calculate_rate(dataset, var, **kwargs):
     zeros= np.zeros_like(dataset[var][:,:,:])    
     if bucket==True:
         var_correct = dataset[var]+dataset[bucket_varname(var)]*bucket_value
-        print 'correcting'
+        print('correcting')
     else:
         var_correct = dataset[var]
     copy = var_correct[1:,:,:] - var_correct[0:-1,:,:]
@@ -241,7 +232,7 @@ def FSFC(inds,ods,**kwargs):
     ods["LW_sfc"][1:,:,:] = lwupb - lwdnb
     ods["SRAD"] = ods["SW_sfc"] + ods["LW_sfc"]
     ods["FSFC"] = ods["SW_sfc"] + ods["LW_sfc"] + ods["SH"] + ods["LH"]
-    print "wrote FSFC"
+    print("wrote FSFC")
     # assig
     return      
 
@@ -259,7 +250,7 @@ def FTOA(inds,ods,**kwargs):
     ods["LW_toa"][1:,:,:] = lwdnt - lwupt
     # top of atmosphere
     ods["FTOA"] = ods["SW_toa"] + ods["LW_toa"]
-    print "wrote FTOA"
+    print("wrote FTOA")
     return 
 
 def FWALL(ods,**kwargs):
@@ -280,30 +271,26 @@ def AddVar(inds,ods,var, **kwargs):
     elif rate == True: 
         varr = "{}_rate".format(var)
         ods[varr]  = (['time','xlat','xlon'],  np.zeros_like(inds[var]))
-        print 'calculate rate'
+        print('calculate rate')
         ods[varr][1:,:,:] = calculate_rate(inds, var)
         
+def HRLDAS_to_RESTART(hrldas, wrfrestart, dictionary):
+    # 
+    hrldas_ds = Dataset(hrldas)
+    wrfrestart_ds = Dataset(wrfrestart)
+    
+    for key in dictionary.keys():
+        replace = hrldas_ds[key].values()
 
-#def get_args(func):
-#    def wrapper(*args):
-#        args=*args
-#        return func(*args), args
+    
+
     
 if __name__ == "__main__":
     dirc="/home/wrudisill/scratch/WRF_PROJECTS/wrf_cfsr_1998-03-19_00__1998-03-27_00/wrf_out/{}"
     files="wrfout_d02_1998*"
     filelist = dirc.format(files)
     inds = xr.open_mfdataset(filelist)
-    #newds = xr.Dataset(data_vars=None, coords=ds.coords, attrs=ds.attrs) 
-    #
-    #VerticalEnergyStorage(newds, ds, glob.glob(filelist))
-    
-#    ds = xr.open_mfdataset("1998_spinup.nc")
-#    times = 50 
-#    t1 = ds['dEdt'][0:50,:,:].sum(axis=0)/50.
-#    t2 = ds['dEdt'][50:100,:,:].sum(axis=0)/50.
-            
-    ods = xr.open_mfdataset("AR96_SpinUp.nc")   
-    #FWALL(ds)
-    AddVar(inds,ods, "ACSNOM", rate=True)
-    ods.to_netcdf("AR96_SpinUp_.nc")  
+    print(inds["SNOWNC"])
+
+
+
