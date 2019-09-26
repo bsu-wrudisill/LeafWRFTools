@@ -1,6 +1,9 @@
 import subprocess
 import os 
 
+'''
+These are helper, or 'accessory' functions to be used by leafwrftools
+'''
 def system_cmd(cmd):
     # issue system commands 
     proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)

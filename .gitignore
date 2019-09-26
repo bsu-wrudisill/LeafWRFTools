@@ -3,5 +3,5 @@ Figures
 *.pyc
 *__pycache__
 *.png 
-./Scratch
+./scratch
 _test*.py
