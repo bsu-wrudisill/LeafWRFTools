@@ -2,3 +2,6 @@ Data
 Figures
 *.pyc
 *__pycache__
+*.png 
+./Scratch
+_test*.py
